@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Creative Heart Disease Severity Prediction</title>
+  <link href="https://fonts.googleapis.com/css?family=Montserrat:700,400&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background: #fbe9f7;
+      font-family: 'Montserrat', sans-serif;
+      color: #4a4a4a;
+      min-height: 100vh;
+      position: relative;
+      overflow-x: hidden;
+      --bg-color: #fff;
+      --text-color: #4a4a4a;
+    }
+    .darkmode {
+      --bg-color: #1d1d1d;
+      --text-color: #eee;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+    }
+
+    /* Subtle animated heart background */
+    .heart-background {
+      position: fixed;
+      top: -80px;
+      left: -100px;
+      width: 350px;
+      height: 350px;
+      opacity: 0.2;
+      animation: floatHeart 12s infinite ease-in-out alternate;
+      z-index: -1;
+      fill:#f06292;
+    }
+    @keyframes floatHeart {
+      0% { transform: translateY(0) translateX(0) scale(1); }
+      50% { transform: translateY(-15px) translateX(15px) scale(1.07); }
+      100% { transform: translateY(0) translateX(0) scale(1); }
+    }
+
+    .container {
+      max-width: 480px;
+      background: var(--bg-color);
+      margin: 40px auto;
+      border-radius: 18px;
+      box-shadow: 0 10px 24px rgba(195, 95, 150, 0.2);
+      padding: 36px 30px 30px;
+      position: relative;
+      z-index: 1;
+      color: var(--text-color);
+      transition: background-color 0.3s, color 0.3s;
+    }
+    h2 {
+      color: #a31249;
+      text-align: center;
+      margin-bottom: 26px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+
+    .form-row {
+      margin-bottom: 17px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    label {
+      flex-basis: 42%;
+      font-weight: 600;
+    }
+    input, select {
+      border: 1px solid #ccc;
+      border-radius: 7px;
+      width: 55%;
+      padding: 8px 11px;
+      font-size: 1rem;
+      transition: all 0.2s ease;
+      background: var(--bg-color);
+      color: var(--text-color);
+    }
+    input:focus, select:focus {
+      outline: none;
+      border-color: #a31249;
+      box-shadow: 0 0 6px #f06292a5;
+      background: var(--bg-color);
+      color: var(--text-color);
+    }
+
+    button {
+      display: block;
+      width: 100%;
+      background-color: #a31249;
+      border: none;
+      color: white;
+      padding: 14px 20px;
+      font-size: 1.18rem;
+      font-weight: 700;
+      border-radius: 15px;
+      cursor: pointer;
+      margin-top: 22px;
+      box-shadow: 0 6px 16px #e91e6355;
+      transition: background-color 0.3s ease;
+    }
+    button:hover {
+      background-color: #c1346a;
+    }
+
+    #resultCard {
+      background: #fee6f8;
+      border-radius: 18px;
+      box-shadow: 0 0 18px #f7ccd9cc;
+      margin-top: 24px;
+      padding: 26px 22px;
+      text-align: center;
+      display: none;
+      animation: pulseFade 1.2s forwards;
+      color: #660036;
+    }
+    @keyframes pulseFade {
+      0% { opacity: 0; transform: scale(0.85); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+
+    .severityBadge {
+      display: inline-block;
+      font-size: 2.2rem;
+      font-weight: 800;
+      border-radius: 16px;
+      margin-bottom: 18px;
+      padding: 16px 28px;
+      color: white;
+      user-select: none;
+    }
+    .sev-low { background-color: #43a047; }
+    .sev-moderate { background-color: #f9a825; }
+    .sev-high { background-color: #b71c1c; }
+
+    #severityMessage {
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin-bottom: 14px;
+    }
+
+    /* Feature importance styling */
+    #featureImportance {
+      max-width: 480px;
+      margin: 20px auto;
+      background: #fff0f4;
+      border-radius: 12px;
+      padding: 12px 16px;
+      box-shadow: 0 4px 18px #f7ccd9;
+      color: #a31249;
+      display: none;
+    }
+    #featureImportance h3 {
+      margin-top: 0;
+      font-weight: 700;
+    }
+    #importanceList {
+      list-style-type: none;
+      padding-left: 0;
+      margin: 10px 0 0;
+    }
+    #importanceList li {
+      padding: 5px 0;
+    }
+
+    /* Next steps card */
+    #nextSteps {
+      max-width: 480px;
+      margin: 18px auto;
+      padding: 14px 22px;
+      background: #ffe6e9;
+      border-radius: 14px;
+      box-shadow: 0 2px 10px #f8bbca;
+      color: #9a2b5d;
+      display: none;
+      font-weight: 500;
+    }
+    #nextSteps h3 {
+      margin-top: 0;
+      color: #ad1457;
+      font-weight: 700;
+    }
+    #nextSteps ul {
+      padding-left: 16px;
+      line-height: 1.5;
+      margin-top: 8px;
+    }
+    #nextSteps li {
+      margin-bottom: 6px;
+    }
+
+    /* Tooltip styling */
+    .tooltip {
+      position: relative;
+      cursor: help;
+      display: inline-block;
+      border-bottom: 1px dashed #a31249;
+      color: #a31249;
+      font-weight: 600;
+    }
+    .tooltip::after {
+      content: attr(data-tip);
+      position: absolute;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      width: 210px;
+      background: #fee6f7cc;
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-size: 0.9rem;
+      left: 110%;
+      top: 50%;
+      transform: translateY(-50%);
+      pointer-events: none;
+      box-shadow: 2px 2px 10px #f498bbaa;
+      color: #a31249;
+      z-index: 10;
+    }
+    .tooltip:hover::after {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+
+  <svg class="heart-background" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.27 2 8.5 2 5.42
+      4.42 3 7.5 3c1.74 0 3.41 1.01 
+      4.5 2.09C13.09 4.01 14.76 3 16.5
+      3 19.58 3 22 5.42 22 8.5c0 3.77-3.4
+      6.86-8.55 11.54L12 21.35z"/>
+  </svg>
+
+  <div class="container">
+    <h2>Heart Disease Severity Prediction</h2>
+    <form id="heartForm">
+      <div class="form-row">
+        <label>Age 
+          <span tabindex="0" class="tooltip" data-tip="Patient's age in years">ⓘ</span>
+        </label>
+        <input type="number" name="age" min="1" max="120" required>
+      </div>
+      <div class="form-row">
+        <label>Sex</label>
+        <select name="sex" required>
+          <option value="Female">Female</option>
+          <option value="Male">Male</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label>Chest Pain Type 
+          <span tabindex="0" class="tooltip" data-tip="'Asymptomatic' is highest risk">ⓘ</span>
+        </label>
+        <select name="cp" required>
+          <option value="typical angina">Typical angina</option>
+          <option value="atypical angina">Atypical angina</option>
+          <option value="non-anginal">Non-anginal</option>
+          <option value="asymptomatic">Asymptomatic</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label>Resting Blood Pressure</label>
+        <input type="number" name="trestbps" min="50" max="250" required>
+      </div>
+      <div class="form-row">
+        <label>Cholesterol</label>
+        <input type="number" name="chol" min="100" max="600" required>
+      </div>
+      <div class="form-row">
+        <label>Fasting Blood Sugar</label>
+        <select name="fbs" required>
+          <option value="False">False</option>
+          <option value="True">True</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label>Rest ECG 
+          <span tabindex="0" class="tooltip" data-tip="LV hypertrophy is higher risk">ⓘ</span>
+        </label>
+        <select name="restecg" required>
+          <option value="normal">Normal</option>
+          <option value="st-t abnormality">ST-T abnormality</option>
+          <option value="lv hypertrophy">LV hypertrophy</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label>Max Heart Rate</label>
+        <input type="number" name="thalch" min="60" max="220" required>
+      </div>
+      <div class="form-row">
+        <label>Exercise Induced Angina</label>
+        <select name="exang" required>
+          <option value="False">False</option>
+          <option value="True">True</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label>Oldpeak
+          <span tabindex="0" class="tooltip" data-tip="ST depression after exercise">ⓘ</span>
+        </label>
+        <input type="number" step="0.1" name="oldpeak" min="0" max="10" required>
+      </div>
+      <div class="form-row">
+        <label>Slope</label>
+        <select name="slope" required>
+          <option value="upsloping">Upsloping</option>
+          <option value="flat">Flat</option>
+          <option value="downsloping">Downsloping</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label>Major Vessels Ca</label>
+        <select name="ca" required>
+          <option value="0">0</option>
+          <option value="1">1</option>
+          <option value="2">2</option>
+          <option value="3">3</option>
+          <option value="4">4</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label>Thal</label>
+        <select name="thal" required>
+          <option value="normal">Normal</option>
+          <option value="fixed defect">Fixed defect</option>
+          <option value="reversable defect">Reversable defect</option>
+        </select>
+      </div>
+      <button type="submit">💗 Predict Severity</button>
+    </form>
+
+    <div id="resultCard" aria-live="polite" role="region" aria-atomic="true" style="margin-top:30px; display:none; text-align:center; border-radius:16px; background:#fee6f8; padding:24px; box-shadow: 0 6px 25px #f8a8c0;">
+      <h3 style="color:#a31249; margin-bottom: 15px;">Prediction Result</h3>
+      <span id="severityBadge" class="severityBadge"></span>
+      <p id="severityMessage"></p>
+    </div>
+
+    <div id="featureImportance">
+      <h3>What influenced your risk?</h3>
+      <ul id="importanceList"></ul>
+    </div>
+
+    <div id="nextSteps">
+      <h3>Your Personalized Next Steps</h3>
+      <ul id="nextStepsList"></ul>
+    </div>
+
+    <button id="darkModeToggle" style="margin: 30px auto; display: block; padding: 8px 22px; border: none; background:#a31249; color:white; border-radius: 15px; cursor:pointer; font-weight:700;">Toggle Dark Mode 🌓</button>
+
+  </div>
+
+<script>
+  document.getElementById('darkModeToggle').onclick = function () {
+    document.body.classList.toggle('darkmode');
+  };
+
+  function showFeatureImportance() {
+    const importanceDiv = document.getElementById('featureImportance');
+    const list = document.getElementById('importanceList');
+    list.innerHTML = '';
+    // Temporary example, replace with your real explainability data if available
+    const features = [
+      { name: "Cholesterol", impact: "High" },
+      { name: "Age", impact: "Moderate" },
+      { name: "Chest Pain Type", impact: "High" },
+      { name: "Resting Blood Pressure", impact: "Moderate" },
+    ];
+    features.forEach(feat => {
+      const li = document.createElement('li');
+      li.textContent = `${feat.name}: ${feat.impact} impact`;
+      list.appendChild(li);
+    });
+    importanceDiv.style.display = 'block';
+  }
+
+  function showNextSteps(severity) {
+    const nextStepsDiv = document.getElementById('nextSteps');
+    const ul = document.getElementById('nextStepsList');
+    ul.innerHTML = '';
+    const steps = {
+      0: [
+        "Keep active regularly",
+        "Maintain balanced nutrition",
+        "Continue checkups annually"
+      ],
+      1: [
+        "Lower stress with relaxation techniques",
+        "Consider dietary improvements",
+        "Monitor blood pressure regularly"
+      ],
+      2: [
+        "Consult your physician soon",
+        "Schedule blood tests and ECG",
+        "Adopt heart-healthy lifestyle"
+      ],
+      3: [
+        "Urgent medical evaluation recommended",
+        "Avoid smoking and excessive alcohol",
+        "Follow prescribed treatments"
+      ],
+      4: [
+        "Seek specialist cardiologist care immediately",
+        "Follow hospital care protocols",
+        "Engage in cardiac rehabilitation programs"
+      ]
+    };
+    (steps[severity] || []).forEach(step => {
+      const li = document.createElement('li');
+      li.textContent = step;
+      ul.appendChild(li);
+    });
+    nextStepsDiv.style.display = 'block';
+  }
+
+  document.getElementById('heartForm').onsubmit = async function (e) {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const data = Object.fromEntries(formData.entries());
+    const categoricalFields = ["sex", "cp", "fbs", "restecg", "slope", "thal", "exang"];
+    for (let key in data) {
+      if (!categoricalFields.includes(key)) {
+        data[key] = Number(data[key]);
+      }
+    }
+    try {
+      const response = await fetch('http://127.0.0.1:5000/predict', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      const resultCard = document.getElementById('resultCard');
+      const severityBadge = document.getElementById('severityBadge');
+      const severityMessage = document.getElementById('severityMessage');
+      resultCard.style.display = "none";
+      document.getElementById('featureImportance').style.display = "none";
+      document.getElementById('nextSteps').style.display = "none";
+
+      if (!response.ok) {
+        const err = await response.json();
+        severityBadge.innerText = "Error";
+        severityBadge.className = "severityBadge sev-high";
+        severityMessage.innerText = err.error || "Unknown error";
+        resultCard.style.display = "block";
+        return;
+      }
+
+      const result = await response.json();
+      if ('predicted_severity' in result) {
+        const sev = Number(result.predicted_severity);
+        let text = "";
+        let colorClass = "";
+        if (sev === 0) {
+          text = "Low Risk (0)";
+          colorClass = "sev-low";
+        } else if (sev === 1) {
+          text = "Mild Risk (1)";
+          colorClass = "sev-low";
+        } else if (sev === 2) {
+          text = "Moderate Risk (2)";
+          colorClass = "sev-moderate";
+        } else if (sev === 3) {
+          text = "High Risk (3)";
+          colorClass = "sev-high";
+        } else {
+          text = "Very High Risk (4)";
+          colorClass = "sev-high";
+        }
+        severityBadge.innerText = text;
+        severityBadge.className = "severityBadge " + colorClass;
+        // Friendly message based on risk level
+        const riskMessages = [
+          "Great news! Your heart health looks good. Keep up the good work!",
+          "Slight risk detected. Consider a heart-healthy lifestyle.",
+          "Moderate risk. Schedule a checkup and review your lifestyle.",
+          "High risk! Please consult a healthcare professional urgently.",
+          "Very high risk! Immediate action is recommended."
+        ];
+        severityMessage.innerText = riskMessages[sev] || "";
+        resultCard.style.display = "block";
+
+        // Show explainability and next steps
+        showFeatureImportance();
+        showNextSteps(sev);
+      } else {
+        severityBadge.innerText = "Error";
+        severityBadge.className = "severityBadge sev-high";
+        severityMessage.innerText = result.error || "Prediction not received.";
+        resultCard.style.display = "block";
+      }
+    } catch (error) {
+      const resultCard = document.getElementById('resultCard');
+      const severityBadge = document.getElementById('severityBadge');
+      const severityMessage = document.getElementById('severityMessage');
+      severityBadge.innerText = "Error";
+      severityBadge.className = "severityBadge sev-high";
+      severityMessage.innerText = "Error communicating with API.";
+      resultCard.style.display = "block";
+    }
+  };
+</script>
+</body>
+</html>
